@@ -76,7 +76,8 @@
     .control { display: grid; gap: 8px; }
     .row { display:flex; gap:10px; align-items:center; justify-content:space-between; }
     label { font-size: 14px; color: var(--muted); }
-    input[type="number"] {
+    input[type="number"],
+    select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -85,7 +86,8 @@
       font-size: 14px;
       outline: none;
     }
-    input[type="number"]:focus { box-shadow: 0 0 0 4px var(--ring); border-color: var(--accent); }
+    input[type="number"]:focus,
+    select:focus { box-shadow: 0 0 0 4px var(--ring); border-color: var(--accent); }
     .field { display:grid; gap:6px; }
     .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .three-col { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
@@ -143,6 +145,17 @@
     }
 
     .note { font-size:12px; color:var(--muted); }
+
+    h2 { font-size: clamp(20px, 2.6vw, 26px); margin: 32px 0 8px; }
+    #dealAnalyzer { margin-bottom: 64px; }
+    .stat-list { display:grid; gap:8px; margin:12px 0 0; padding:0; list-style:none; }
+    .stat { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid rgba(2,6,23,.08); font-size:14px; }
+    .stat:last-child { border-bottom:none; }
+    .stat .label { color:var(--muted); }
+    .stat .value { font-weight:600; }
+    .unit-field .btn { font-size:11px; }
+    .unit-field .row { align-items:center; }
+    .section-note { font-size:12px; color:var(--muted); margin-top:-4px; }
   </style>
 </head>
 <body>
@@ -303,12 +316,172 @@
         </div>
       </div>
     </main>
+
+    <section class="container" id="dealAnalyzer">
+      <h2>Quick Deal Analyzer</h2>
+      <div class="section-note">Plug in rents, expenses, and financing terms to get an instant read on cash flow and returns.</div>
+
+      <div class="cards">
+        <div class="card"><div class="content"><div class="title-sm">Total Cash Needed</div><div id="anCashNeededKpi" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">Gross Monthly Rent</div><div id="anGrossRentKpi" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">Monthly Cash Flow</div><div id="anCashflowKpi" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">Cash-on-Cash Return</div><div id="anCocKpi" class="big">—</div></div></div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="content">
+            <div class="grid" style="gap:14px">
+              <div class="field">
+                <label>Purchase Price</label>
+                <div class="two-col">
+                  <input id="anPrice" type="number" min="0" step="1000" value="350000" />
+                  <span class="pill" id="anPricePretty">$—</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Square Footage</label>
+                <input id="anSqft" type="number" min="0" step="10" value="1800" />
+              </div>
+
+              <div class="field">
+                <div class="row">
+                  <label>Rehab Budget</label>
+                  <span class="pill" id="anRehabDisplay">$—</span>
+                </div>
+                <div class="two-col">
+                  <select id="rehabMode">
+                    <option value="total">Total Cost</option>
+                    <option value="perSqft">Cost per Sq Ft</option>
+                  </select>
+                  <input id="rehabValue" type="number" min="0" step="500" value="30000" />
+                </div>
+                <div class="note">Switch between total rehab dollars or per-square-foot budgeting.</div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Closing Costs (% of price)</label>
+                  <input id="anClosingPct" type="number" min="0" max="20" step="0.1" value="3" />
+                </div>
+                <div class="field">
+                  <label>Down Payment %</label>
+                  <input id="anDownPct" type="number" min="0" max="100" step="0.1" value="20" />
+                </div>
+              </div>
+
+              <div class="field unit-field">
+                <div class="row">
+                  <label>Units &amp; Monthly Rent</label>
+                  <button type="button" class="btn" id="addUnitBtn">Add Unit</button>
+                </div>
+                <div id="unitsList" class="grid" style="gap:12px"></div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Monthly Operating Expenses</label>
+                  <input id="anMonthlyExpenses" type="number" min="0" step="50" value="450" />
+                </div>
+                <div class="field">
+                  <label>Monthly Utilities</label>
+                  <input id="anUtilities" type="number" min="0" step="50" value="150" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Management Fee % of Rent</label>
+                  <input id="anMgmtPct" type="number" min="0" max="30" step="0.1" value="8" />
+                </div>
+                <div class="field">
+                  <label>Other Monthly Income</label>
+                  <input id="anOtherIncome" type="number" min="0" step="25" value="0" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Annual Taxes</label>
+                  <input id="anTaxesAnnual" type="number" min="0" step="100" value="5200" />
+                </div>
+                <div class="field">
+                  <label>Annual Insurance</label>
+                  <input id="anInsAnnual" type="number" min="0" step="100" value="1800" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Other Annual Expenses</label>
+                  <input id="anOtherAnnual" type="number" min="0" step="100" value="600" />
+                </div>
+                <div class="field">
+                  <label>Vacancy Allowance %</label>
+                  <input id="anVacancyPct" type="number" min="0" max="100" step="0.5" value="5" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Interest Rate %</label>
+                  <input id="anRate" type="number" min="0" max="30" step="0.01" value="6.75" />
+                </div>
+                <div class="field">
+                  <label>Amortization (years)</label>
+                  <input id="anAmortYears" type="number" min="1" max="40" step="1" value="30" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="content">
+              <div class="title-sm" style="margin-bottom:8px">Deal Snapshot</div>
+              <div class="stat-list">
+                <div class="stat"><span class="label">Purchase Price</span><span class="value" id="anPriceLabel">$—</span></div>
+                <div class="stat"><span class="label">Rehab Budget</span><span class="value" id="anRehabLabel">$—</span></div>
+                <div class="stat"><span class="label">Closing Costs</span><span class="value" id="anClosingLabel">$—</span></div>
+                <div class="stat"><span class="label">Total Project Cost</span><span class="value" id="anProjectCost">$—</span></div>
+                <div class="stat"><span class="label">Total Cash Needed</span><span class="value" id="anCashNeeded">$—</span></div>
+                <div class="stat"><span class="label">Loan Amount</span><span class="value" id="anLoanAmount">$—</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="content">
+              <div class="title-sm" style="margin-bottom:8px">Income &amp; Expense Breakdown</div>
+              <div class="stat-list">
+                <div class="stat"><span class="label">Gross Monthly Rent</span><span class="value" id="anGrossRent">$—</span></div>
+                <div class="stat"><span class="label">Other Monthly Income</span><span class="value" id="anOtherIncomeLabel">$—</span></div>
+                <div class="stat"><span class="label">Vacancy Loss</span><span class="value" id="anVacancyLoss">$—</span></div>
+                <div class="stat"><span class="label">Effective Monthly Income</span><span class="value" id="anEffectiveIncome">$—</span></div>
+                <div class="stat"><span class="label">Management Fee</span><span class="value" id="anMgmtFee">$—</span></div>
+                <div class="stat"><span class="label">Monthly Operating Expenses</span><span class="value" id="anOpExMonthly">$—</span></div>
+                <div class="stat"><span class="label">Monthly NOI</span><span class="value" id="anNoiMonthly">$—</span></div>
+                <div class="stat"><span class="label">Annual NOI</span><span class="value" id="anNoiAnnual">$—</span></div>
+                <div class="stat"><span class="label">Monthly Mortgage</span><span class="value" id="anMortgage">$—</span></div>
+                <div class="stat"><span class="label">Monthly Cash Flow</span><span class="value" id="anCashflow">$—</span></div>
+                <div class="stat"><span class="label">Cap Rate</span><span class="value" id="anCapRate">—</span></div>
+                <div class="stat"><span class="label">Cash-on-Cash Return</span><span class="value" id="anCoc">—</span></div>
+                <div class="stat"><span class="label">DSCR</span><span class="value" id="anDscr">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
 <script>
   // --- Helpers ---
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0}) : "—";
+  const fmtPct = (n) => isFinite(n) ? `${n.toFixed(2)}%` : "—";
   const clamp = (n,min,max) => Math.min(max, Math.max(min,n));
 
   function monthlyPayment(principal, annualRatePct, termYears) {
@@ -358,6 +531,54 @@
   const kpiCash = $("kpiCash");
   const kpiConvPITI = $("kpiConvPITI");
   const kpiConvCash = $("kpiConvCash");
+
+  // Deal analyzer inputs
+  const anPrice = $("anPrice");
+  const anSqft = $("anSqft");
+  const rehabMode = $("rehabMode");
+  const rehabValue = $("rehabValue");
+  const anClosingPct = $("anClosingPct");
+  const anDownPct = $("anDownPct");
+  const unitsList = $("unitsList");
+  const addUnitBtn = $("addUnitBtn");
+  const anMonthlyExpenses = $("anMonthlyExpenses");
+  const anUtilities = $("anUtilities");
+  const anMgmtPct = $("anMgmtPct");
+  const anOtherIncomeInput = $("anOtherIncome");
+  const anTaxesAnnual = $("anTaxesAnnual");
+  const anInsAnnual = $("anInsAnnual");
+  const anOtherAnnual = $("anOtherAnnual");
+  const anVacancyPct = $("anVacancyPct");
+  const anRate = $("anRate");
+  const anAmortYears = $("anAmortYears");
+
+  // Deal analyzer labels
+  const anPricePretty = $("anPricePretty");
+  const anRehabDisplay = $("anRehabDisplay");
+  const anCashNeededKpi = $("anCashNeededKpi");
+  const anGrossRentKpi = $("anGrossRentKpi");
+  const anCashflowKpi = $("anCashflowKpi");
+  const anCocKpi = $("anCocKpi");
+
+  const anPriceLabel = $("anPriceLabel");
+  const anRehabLabel = $("anRehabLabel");
+  const anClosingLabel = $("anClosingLabel");
+  const anProjectCost = $("anProjectCost");
+  const anCashNeeded = $("anCashNeeded");
+  const anLoanAmount = $("anLoanAmount");
+  const anGrossRent = $("anGrossRent");
+  const anOtherIncomeLabel = $("anOtherIncomeLabel");
+  const anVacancyLoss = $("anVacancyLoss");
+  const anEffectiveIncome = $("anEffectiveIncome");
+  const anMgmtFeeLabel = $("anMgmtFee");
+  const anOpExMonthly = $("anOpExMonthly");
+  const anNoiMonthly = $("anNoiMonthly");
+  const anNoiAnnual = $("anNoiAnnual");
+  const anMortgage = $("anMortgage");
+  const anCashflow = $("anCashflow");
+  const anCapRate = $("anCapRate");
+  const anCoc = $("anCoc");
+  const anDscr = $("anDscr");
 
   // Dallas snap
   $("btnDallas").addEventListener("click", () => { taxRate.value = "2.23503"; update(); });
@@ -497,6 +718,38 @@
     barLegend.innerHTML = BAR_SERIES.map(series => `<span><i style="background:${series.color}"></i>${series.label}</span>`).join("");
   }
 
+  function refreshUnitIndexes() {
+    const fields = unitsList.querySelectorAll('.unit-field-item');
+    fields.forEach((field, idx) => {
+      const label = field.querySelector('.unit-label');
+      if (label) label.textContent = `Unit ${idx + 1} Rent ($/mo)`;
+      const removeBtn = field.querySelector('.unit-remove');
+      if (removeBtn) removeBtn.disabled = fields.length === 1;
+    });
+  }
+
+  function addUnitField(initialValue = 0) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'field unit-field-item';
+    wrapper.innerHTML = `
+      <div class="row">
+        <label class="unit-label"></label>
+        <button type="button" class="btn unit-remove">Remove</button>
+      </div>
+      <input type="number" class="unit-rent" min="0" step="25" value="${initialValue}" />
+    `;
+    const rentInput = wrapper.querySelector('.unit-rent');
+    rentInput.addEventListener('input', updateAnalyzer);
+    const removeBtn = wrapper.querySelector('.unit-remove');
+    removeBtn.addEventListener('click', () => {
+      wrapper.remove();
+      refreshUnitIndexes();
+      updateAnalyzer();
+    });
+    unitsList.appendChild(wrapper);
+    refreshUnitIndexes();
+  }
+
   // --- Logic ---
   let liveFirst = Number(firstPct.value);
   let liveSecond = Number(secondPct.value);
@@ -587,6 +840,79 @@
     ]);
   }
 
+  function updateAnalyzer() {
+    const priceVal = Number(anPrice.value || 0);
+    const sqftVal = Number(anSqft.value || 0);
+    const rehabInputVal = Number(rehabValue.value || 0);
+    const rehabModeVal = rehabMode.value;
+    const closingPctVal = Number(anClosingPct.value || 0);
+    const downPctVal = clamp(Number(anDownPct.value || 0), 0, 100);
+    const monthlyExpensesVal = Number(anMonthlyExpenses.value || 0);
+    const utilitiesVal = Number(anUtilities.value || 0);
+    const mgmtPctVal = Math.max(0, Number(anMgmtPct.value || 0));
+    const otherIncomeVal = Number(anOtherIncomeInput.value || 0);
+    const taxesAnnualVal = Number(anTaxesAnnual.value || 0);
+    const insAnnualVal = Number(anInsAnnual.value || 0);
+    const otherAnnualVal = Number(anOtherAnnual.value || 0);
+    const vacancyPctVal = clamp(Number(anVacancyPct.value || 0), 0, 100);
+    const rateVal = Number(anRate.value || 0);
+    const amortYearsVal = Math.max(1, Number(anAmortYears.value || 0));
+
+    const rehabTotal = rehabModeVal === 'perSqft' ? rehabInputVal * sqftVal : rehabInputVal;
+    const closingCostAmt = priceVal * (closingPctVal / 100);
+    const downPaymentAmt = priceVal * (downPctVal / 100);
+    const loanAmount = Math.max(0, priceVal - downPaymentAmt);
+
+    const rents = Array.from(unitsList.querySelectorAll('.unit-rent')).map(input => Number(input.value || 0));
+    const grossRent = rents.reduce((sum, val) => sum + val, 0);
+    const grossMonthlyIncome = grossRent + otherIncomeVal;
+    const vacancyLoss = grossMonthlyIncome * (vacancyPctVal / 100);
+    const effectiveIncome = grossMonthlyIncome - vacancyLoss;
+
+    const managementFee = effectiveIncome * (mgmtPctVal / 100);
+    const baseOperatingMonthly = monthlyExpensesVal + utilitiesVal + (taxesAnnualVal / 12) + (insAnnualVal / 12) + (otherAnnualVal / 12);
+    const totalOperatingMonthly = baseOperatingMonthly + managementFee;
+    const noiMonthly = effectiveIncome - totalOperatingMonthly;
+    const noiAnnual = noiMonthly * 12;
+    const mortgagePayment = loanAmount > 0 ? monthlyPayment(loanAmount, rateVal, amortYearsVal) : 0;
+    const monthlyCashflow = noiMonthly - mortgagePayment;
+
+    const totalProjectCost = priceVal + rehabTotal;
+    const totalCashNeeded = downPaymentAmt + closingCostAmt + rehabTotal;
+    const capRateVal = totalProjectCost > 0 ? (noiAnnual / totalProjectCost) * 100 : NaN;
+    const cashOnCashVal = totalCashNeeded > 0 ? (monthlyCashflow * 12 / totalCashNeeded) * 100 : NaN;
+    const dscrVal = mortgagePayment > 0 ? noiMonthly / mortgagePayment : NaN;
+
+    anPricePretty.textContent = fmt(priceVal);
+    anRehabDisplay.textContent = fmt(rehabTotal);
+
+    anCashNeededKpi.textContent = fmt(totalCashNeeded);
+    anGrossRentKpi.textContent = fmt(grossRent);
+    anCashflowKpi.textContent = fmt(monthlyCashflow);
+    anCocKpi.textContent = fmtPct(cashOnCashVal);
+
+    anPriceLabel.textContent = fmt(priceVal);
+    anRehabLabel.textContent = fmt(rehabTotal);
+    anClosingLabel.textContent = fmt(closingCostAmt);
+    anProjectCost.textContent = fmt(totalProjectCost);
+    anCashNeeded.textContent = fmt(totalCashNeeded);
+    anLoanAmount.textContent = fmt(loanAmount);
+
+    anGrossRent.textContent = fmt(grossRent);
+    anOtherIncomeLabel.textContent = fmt(otherIncomeVal);
+    anVacancyLoss.textContent = fmt(-vacancyLoss);
+    anEffectiveIncome.textContent = fmt(effectiveIncome);
+    anMgmtFeeLabel.textContent = fmt(managementFee);
+    anOpExMonthly.textContent = fmt(totalOperatingMonthly);
+    anNoiMonthly.textContent = fmt(noiMonthly);
+    anNoiAnnual.textContent = fmt(noiAnnual);
+    anMortgage.textContent = fmt(mortgagePayment);
+    anCashflow.textContent = fmt(monthlyCashflow);
+    anCapRate.textContent = fmtPct(capRateVal);
+    anCoc.textContent = fmtPct(cashOnCashVal);
+    anDscr.textContent = isFinite(dscrVal) ? dscrVal.toFixed(2) : '—';
+  }
+
   // Live slider display: update labels immediately, compute on input (fast enough here)
   firstPct.addEventListener("input", () => { syncStructure("first"); update(); });
   secondPct.addEventListener("input", () => { syncStructure("second"); update(); });
@@ -597,9 +923,23 @@
   [price,taxRate,insAnnual,closingPct,firstRate,firstTerm,secondRate,secondTerm,secondIO,balloonYears,convDown,convRate,convTerm,convClose]
     .forEach(el => el.addEventListener(el.type === "checkbox" ? "change" : "input", update));
 
+  const analyzerInputs = [anPrice, anSqft, rehabMode, rehabValue, anClosingPct, anDownPct, anMonthlyExpenses, anUtilities, anMgmtPct, anOtherIncomeInput, anTaxesAnnual, anInsAnnual, anOtherAnnual, anVacancyPct, anRate, anAmortYears];
+  analyzerInputs.forEach(el => {
+    if (!el) return;
+    const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(eventName, updateAnalyzer);
+  });
+
+  addUnitBtn.addEventListener('click', () => {
+    addUnitField();
+    updateAnalyzer();
+  });
+
   // Initial
   ensureDefaultInsurance();
   update();
+  addUnitField(1800);
+  updateAnalyzer();
   window.addEventListener("resize", () => update());
 </script>
 </body>
