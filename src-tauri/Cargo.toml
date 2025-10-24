@@ -1,0 +1,12 @@
+[package]
+name = "real-estate-calculators"
+version = "0.1.0"
+edition = "2021"
+description = "50/40/10 Real Estate Offer Calculator desktop app"
+
+[dependencies]
+tauri = { version = "1", features = ["shell-open"] }
+
+[build-dependencies]
+tauri-build = { version = "1" }
+
