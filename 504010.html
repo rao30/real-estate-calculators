@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>50/40/10 Offer Calculator (Standalone)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Single chart dependency -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --muted: #64748b;
+      --text: #0f172a;
+      --accent: #0ea5e9; /* sky-500 */
+      --accent-2: #34d399; /* emerald-400 */
+      --accent-3: #f59e0b; /* amber-500 */
+      --accent-4: #ef4444; /* red-500 */
+      --ring: rgba(14, 165, 233, .35);
+      --radius: 14px;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .wrap {
+      min-height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    header {
+      padding: 24px 16px 8px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    h1 { font-size: clamp(22px, 3vw, 30px); margin: 0 0 6px; }
+    .muted { color: var(--muted); }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto 56px;
+      padding: 12px 16px 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+    .grid.cols-2 { grid-template-columns: repeat(1, minmax(0,1fr)); }
+    @media (min-width: 1000px) {
+      .grid.cols-2 { grid-template-columns: 1.1fr .9fr; }
+    }
+
+    .cards { display: grid; gap: 12px; grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    @media (min-width: 800px) {
+      .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 12px 30px -12px rgba(0,0,0,.12);
+      border: 1px solid rgba(2,6,23,.06);
+    }
+    .card .content { padding: 16px; }
+    .title-sm { font-size: 12px; color: var(--muted); }
+    .big { font-size: 28px; font-weight: 700; }
+
+    /* Controls */
+    .control { display: grid; gap: 8px; }
+    .row { display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    label { font-size: 14px; color: var(--muted); }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(15,23,42,.15);
+      background: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="number"]:focus { box-shadow: 0 0 0 4px var(--ring); border-color: var(--accent); }
+    .field { display:grid; gap:6px; }
+    .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .three-col { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    .btn {
+      appearance:none; border:1px solid rgba(15,23,42,.15);
+      background:#fff; color:#0f172a; padding:8px 10px; border-radius:10px; font-size:12px; cursor:pointer;
+    }
+    .btn:hover { border-color: var(--accent); box-shadow:0 0 0 3px var(--ring); }
+    .pill {
+      background: #f1f5f9; color:#0f172a; padding:8px 10px; border-radius: 999px; font-size:12px;
+      border:1px solid rgba(2,6,23,.06);
+    }
+
+    /* Sliders */
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+      background: #e2e8f0; border-radius: 999px; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; border:1px solid rgba(15,23,42,.15);
+      box-shadow: 0 1px 0 rgba(0,0,0,.05);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%; background: #fff; border:1px solid rgba(15,23,42,.15);
+      cursor: pointer;
+    }
+
+    .charts { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    @media (min-width: 1000px) { .charts { grid-template-columns: 1fr 1fr; } }
+
+    canvas { width:100%; height:360px; }
+
+    .note { font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>50/40/10 Real Estate Offer Calculator</h1>
+      <div class="muted">Smooth sliders, minimal dependencies, runs locally. Dallas tax snap included.</div>
+    </header>
+
+    <main class="container">
+      <!-- Top KPIs -->
+      <div class="cards">
+        <div class="card"><div class="content"><div class="title-sm">Total Monthly (50/40/10 PITI)</div><div id="kpiPITI" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">Cash to Close (50/40/10)</div><div id="kpiCash" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">PITI (Conventional)</div><div id="kpiConvPITI" class="big">$—</div></div></div>
+        <div class="card"><div class="content"><div class="title-sm">Cash to Close (Conventional)</div><div id="kpiConvCash" class="big">$—</div></div></div>
+      </div>
+
+      <div class="grid cols-2">
+        <!-- Inputs -->
+        <div class="card">
+          <div class="content">
+            <div class="grid" style="gap:14px">
+              <div class="field">
+                <label>Property Price</label>
+                <div class="two-col">
+                  <input id="price" type="number" min="0" step="1000" value="500000" />
+                  <span class="pill" id="pricePretty">$500,000</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="row">
+                  <label>Property Tax Rate (%/yr)</label>
+                  <button class="btn" id="btnDallas">Dallas 2.23503%</button>
+                </div>
+                <div class="two-col">
+                  <input id="taxRate" type="number" min="0" step="0.00001" value="2.23503" />
+                  <span class="pill" id="taxMonthly">$— /mo</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Insurance (annual $)</label>
+                <div class="two-col">
+                  <input id="insAnnual" type="number" min="0" step="100" />
+                  <span class="pill" id="insMonthly">$— /mo</span>
+                </div>
+                <div class="note">Defaults to 0.8% of property price.</div>
+              </div>
+
+              <div class="field">
+                <label>Closing Costs (% of price, 50/40/10)</label>
+                <div class="two-col">
+                  <input id="closingPct" type="number" min="0" max="20" step="0.1" value="2.5" />
+                  <span class="pill" id="closingCash">$—</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="row"><label>Loan Structure (50/40/10)</label><span class="note">1st + 2nd ≤ 100%</span></div>
+                <div class="three-col">
+                  <div class="field">
+                    <div class="row"><span class="note">1st %</span><span class="note" id="firstPctLabel">50%</span></div>
+                    <input id="firstPct" type="range" min="0" max="100" step="0.1" value="50" />
+                    <input id="firstPctNum" type="number" min="0" max="100" step="0.1" value="50" />
+                    <div class="note" id="firstAmtLabel">$—</div>
+                  </div>
+                  <div class="field">
+                    <div class="row"><span class="note">2nd %</span><span class="note" id="secondPctLabel">40%</span></div>
+                    <input id="secondPct" type="range" min="0" max="100" step="0.1" value="40" />
+                    <input id="secondPctNum" type="number" min="0" max="100" step="0.1" value="40" />
+                    <div class="note" id="secondAmtLabel">$—</div>
+                  </div>
+                  <div class="field">
+                    <div class="note">Down %</div>
+                    <div class="pill" id="downPctPill">10% = $—</div>
+                    <div class="note">Auto = 100 − (1st + 2nd)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>1st Rate %</label>
+                  <input id="firstRate" type="number" min="0" max="30" step="0.01" value="7.25" />
+                </div>
+                <div class="field">
+                  <label>1st Term (years)</label>
+                  <input id="firstTerm" type="number" min="1" max="40" step="1" value="30" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>2nd Rate %</label>
+                  <input id="secondRate" type="number" min="0" max="30" step="0.01" value="5.5" />
+                </div>
+                <div class="field">
+                  <label>2nd Term (years)</label>
+                  <input id="secondTerm" type="number" min="1" max="40" step="1" value="30" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label>Interest-only 2nd?</label>
+                  <input id="secondIO" type="checkbox" />
+                </div>
+                <div class="field">
+                  <label>Balloon (years, 0 = none)</label>
+                  <input id="balloonYears" type="number" min="0" max="40" step="1" value="0" />
+                </div>
+              </div>
+
+              <div class="card"><div class="content">
+                <div class="title-sm">Conventional (Comparison)</div>
+                <div class="two-col" style="margin-top:8px">
+                  <div class="field"><label>Down %</label><input id="convDown" type="number" min="0" max="100" step="0.1" value="20" /></div>
+                  <div class="field"><label>Rate %</label><input id="convRate" type="number" min="0" max="30" step="0.01" value="7.25" /></div>
+                </div>
+                <div class="two-col" style="margin-top:8px">
+                  <div class="field"><label>Term (yrs)</label><input id="convTerm" type="number" min="1" max="40" step="1" value="30" /></div>
+                  <div class="field"><label>Closing %</label><input id="convClose" type="number" min="0" max="20" step="0.1" value="2.5" /></div>
+                </div>
+              </div></div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts & Breakdown -->
+        <div class="grid">
+          <div class="card">
+            <div class="content">
+              <div class="title-sm" style="margin-bottom:8px">Payment Breakdown (50/40/10)</div>
+              <div class="two-col" style="gap:8px;margin-bottom:10px">
+                <span class="pill">1st (P&I): <strong id="pill1">$—</strong></span>
+                <span class="pill">2nd: <strong id="pill2">$—</strong></span>
+              </div>
+              <div class="two-col" style="gap:8px;margin-bottom:10px">
+                <span class="pill">Taxes: <strong id="pillTax">$—</strong></span>
+                <span class="pill">Insurance: <strong id="pillIns">$—</strong></span>
+              </div>
+              <canvas id="pie"></canvas>
+              <div class="note" style="margin-top:8px">Total Monthly (PITI): <strong id="totalPITI">$—</strong></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="content">
+              <div class="title-sm" style="margin-bottom:8px">50/40/10 vs Conventional (Stacked PITI)</div>
+              <canvas id="bar"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+  // --- Helpers ---
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0}) : "—";
+  const clamp = (n,min,max) => Math.min(max, Math.max(min,n));
+
+  function monthlyPayment(principal, annualRatePct, termYears) {
+    const r = (annualRatePct/100) / 12;
+    const n = Math.max(1, Math.round(termYears*12));
+    if (r === 0) return principal / n;
+    return principal * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n)-1);
+  }
+
+  // --- Inputs ---
+  const price = $("price");
+  const taxRate = $("taxRate");
+  const insAnnual = $("insAnnual");
+  const closingPct = $("closingPct");
+  const firstPct = $("firstPct");
+  const firstPctNum = $("firstPctNum");
+  const secondPct = $("secondPct");
+  const secondPctNum = $("secondPctNum");
+  const firstRate = $("firstRate");
+  const firstTerm = $("firstTerm");
+  const secondRate = $("secondRate");
+  const secondTerm = $("secondTerm");
+  const secondIO = $("secondIO");
+  const balloonYears = $("balloonYears");
+  const convDown = $("convDown");
+  const convRate = $("convRate");
+  const convTerm = $("convTerm");
+  const convClose = $("convClose");
+
+  // labels
+  const pricePretty = $("pricePretty");
+  const taxMonthly = $("taxMonthly");
+  const insMonthly = $("insMonthly");
+  const closingCash = $("closingCash");
+  const firstPctLabel = $("firstPctLabel");
+  const secondPctLabel = $("secondPctLabel");
+  const firstAmtLabel = $("firstAmtLabel");
+  const secondAmtLabel = $("secondAmtLabel");
+  const downPctPill = $("downPctPill");
+  const pill1 = $("pill1");
+  const pill2 = $("pill2");
+  const pillTax = $("pillTax");
+  const pillIns = $("pillIns");
+  const totalPITI = $("totalPITI");
+
+  const kpiPITI = $("kpiPITI");
+  const kpiCash = $("kpiCash");
+  const kpiConvPITI = $("kpiConvPITI");
+  const kpiConvCash = $("kpiConvCash");
+
+  // Dallas snap
+  $("btnDallas").addEventListener("click", () => { taxRate.value = "2.23503"; update(); });
+
+  // Default insurance = 0.8% of price (set once on load and whenever price changes if user hasn't touched)
+  let userSetInsurance = false;
+  insAnnual.addEventListener("input", () => { userSetInsurance = true; });
+  function ensureDefaultInsurance() {
+    if (!userSetInsurance) insAnnual.value = Math.round(Number(price.value || 0)*0.008);
+  }
+
+  // --- Charts ---
+  const PIE_COLORS = ["#60a5fa","#34d399","#f472b6","#facc15"];
+  let pieChart, barChart;
+
+  function buildCharts() {
+    const pieCtx = $("pie").getContext("2d");
+    const barCtx = $("bar").getContext("2d");
+    pieChart = new Chart(pieCtx, {
+      type: "doughnut",
+      data: {
+        labels: ["First (P&I)","Second","Taxes","Insurance"],
+        datasets: [{ data:[0,0,0,0], backgroundColor: PIE_COLORS, borderWidth: 0 }]
+      },
+      options: { plugins:{ legend:{ position:"bottom" }}, cutout: "55%" }
+    });
+    barChart = new Chart(barCtx, {
+      type: "bar",
+      data: {
+        labels: ["50/40/10","Conventional"],
+        datasets: [
+          { label:"Mortgage (1st)", data:[0,0], backgroundColor:"#60a5fa", stack:"piti" },
+          { label:"Seller (2nd)",  data:[0,0], backgroundColor:"#34d399", stack:"piti" },
+          { label:"Taxes",         data:[0,0], backgroundColor:"#ef4444", stack:"piti" },
+          { label:"Insurance",     data:[0,0], backgroundColor:"#f59e0b", stack:"piti" },
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins:{ legend:{ position:"bottom" }, tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } } },
+        scales:{
+          x:{ stacked:true },
+          y:{ stacked:true, ticks:{ callback:v => fmt(v) } }
+        }
+      }
+    });
+  }
+
+  // --- Logic ---
+  let liveFirst = Number(firstPct.value);
+  let liveSecond = Number(secondPct.value);
+
+  function syncStructure(from) {
+    // keep 1st+2nd ≤ 100 and mirror range/number pairs
+    let f = clamp(Number(firstPct.value), 0, 100);
+    let s = clamp(Number(secondPct.value), 0, 100);
+    if (from === "first") {
+      if (f + s > 100) s = 100 - f;
+    } else if (from === "second") {
+      if (f + s > 100) f = 100 - s;
+    }
+    firstPct.value = f; firstPctNum.value = f;
+    secondPct.value = s; secondPctNum.value = s;
+    liveFirst = f; liveSecond = s;
+    firstPctLabel.textContent = f.toFixed(1) + "%";
+    secondPctLabel.textContent = s.toFixed(1) + "%";
+  }
+
+  function update() {
+    ensureDefaultInsurance();
+
+    const P = Number(price.value||0);
+    const taxPct = Number(taxRate.value||0);
+    const annualIns = Number(insAnnual.value||0);
+    const closePct = Number(closingPct.value||0);
+
+    const fPct = Number(firstPct.value||0);
+    const sPct = Number(secondPct.value||0);
+    const dPct = clamp(100 - fPct - sPct, 0, 100);
+
+    const firstAmount = P * fPct/100;
+    const secondAmount = P * sPct/100;
+    const downAmount = P * dPct/100;
+
+    pricePretty.textContent = fmt(P);
+    const taxMo = P * (taxPct/100)/12;
+    const insMo = annualIns / 12;
+    taxMonthly.textContent = fmt(taxMo) + " /mo";
+    insMonthly.textContent = fmt(insMo) + " /mo";
+    closingCash.textContent = fmt(P * (closePct/100));
+
+    firstAmtLabel.textContent = fmt(firstAmount);
+    secondAmtLabel.textContent = fmt(secondAmount);
+    downPctPill.textContent = `${dPct.toFixed(2)}% = ${fmt(downAmount)}`;
+
+    const firstRatePct = Number(firstRate.value||0);
+    const firstYears = Number(firstTerm.value||0);
+    const secondRatePct = Number(secondRate.value||0);
+    const secondYears = Number(secondTerm.value||0);
+    const isIO = !!secondIO.checked;
+
+    const firstPmt = monthlyPayment(firstAmount, firstRatePct, firstYears);
+    const secondPmt = isIO ? (secondAmount * (secondRatePct/100)/12) : monthlyPayment(secondAmount, secondRatePct, secondYears);
+    const piti = firstPmt + secondPmt + taxMo + insMo;
+    const cashToClose = P*(closePct/100) + downAmount;
+
+    pill1.textContent = fmt(firstPmt);
+    pill2.textContent = fmt(secondPmt);
+    pillTax.textContent = fmt(taxMo);
+    pillIns.textContent = fmt(insMo);
+    totalPITI.textContent = fmt(piti);
+
+    // KPIs
+    kpiPITI.textContent = fmt(piti);
+    kpiCash.textContent = fmt(cashToClose);
+
+    // Conventional
+    const convDownPct = Number(convDown.value||0);
+    const convRatePct = Number(convRate.value||0);
+    const convYears = Number(convTerm.value||0);
+    const convClosePct = Number(convClose.value||0);
+    const convDownAmt = P*convDownPct/100;
+    const convLoanAmt = P - convDownAmt;
+    const convPmt = monthlyPayment(convLoanAmt, convRatePct, convYears);
+    const convPITI = convPmt + taxMo + insMo;
+    const convCash = P*(convClosePct/100) + convDownAmt;
+
+    kpiConvPITI.textContent = fmt(convPITI);
+    kpiConvCash.textContent = fmt(convCash);
+
+    // Charts
+    pieChart.data.datasets[0].data = [firstPmt, secondPmt, taxMo, insMo];
+    pieChart.update("none");
+
+    barChart.data.datasets[0].data = [firstPmt, convPmt]; // Mortgage (1st)
+    barChart.data.datasets[1].data = [secondPmt, 0];      // Seller (2nd)
+    barChart.data.datasets[2].data = [taxMo, taxMo];      // Taxes
+    barChart.data.datasets[3].data = [insMo, insMo];      // Insurance
+    barChart.update("none");
+  }
+
+  // Live slider display: update labels immediately, compute on input (fast enough here)
+  firstPct.addEventListener("input", () => { syncStructure("first"); update(); });
+  secondPct.addEventListener("input", () => { syncStructure("second"); update(); });
+  firstPctNum.addEventListener("input", () => { firstPct.value = firstPctNum.value; syncStructure("first"); update(); });
+  secondPctNum.addEventListener("input", () => { secondPct.value = secondPctNum.value; syncStructure("second"); update(); });
+
+  // Other fields
+  [price,taxRate,insAnnual,closingPct,firstRate,firstTerm,secondRate,secondTerm,secondIO,balloonYears,convDown,convRate,convTerm,convClose]
+    .forEach(el => el.addEventListener(el.type === "checkbox" ? "change" : "input", update));
+
+  // Initial
+  buildCharts();
+  ensureDefaultInsurance();
+  update();
+</script>
+</body>
+</html>
